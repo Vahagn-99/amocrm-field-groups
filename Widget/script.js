@@ -56,15 +56,7 @@ define(['./app.js?cache=' + Date.now()], function (App) {
             },
             async destroy() {
                 try {
-                    await App.default.onSave(_amocrm, self);
-                    return true;
-                } catch (error) {
-                    throw error
-                }
-            },
-            async destroy() {
-                try {
-                    await App.default.onSave(_amocrm, self);
+                    await App.default.destroy(_amocrm, self);
                     return true;
                 } catch (error) {
                     throw error

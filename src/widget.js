@@ -49,14 +49,14 @@ async function async(amocrm) {
 
 let dispatch = null;
 
-function makeFiledItem(data){
-    $('[id^="cf_field_'+ data.id +'_"]').addClass('dtc-default-element')
+function makeFiledItem(data) {
+    $('[id^="cf_field_' + data.id + '_"]').addClass('dtc-default-element')
 }
-async function makeFiledAsGroup(data,level="TITLE_CUSTOM") {
-    console.log(data.id,data.name)
-    $('[id^="cf_field_'+ data.id +'_"]').addClass('dtc-color-main')
-    $('[id^="cf_field_'+ data.id +'_"]').find('.cf-field-wrapper__body').addClass('dtc-group-color')
-    $('[id^="cf_field_'+ data.id +'_"]').find('.cf-field-view__value').text('Заголовок')
+async function makeFiledAsGroup(data, level = "TITLE_CUSTOM") {
+    console.log(data.id, data.name)
+    $('[id^="cf_field_' + data.id + '_"]').addClass('dtc-color-main')
+    $('[id^="cf_field_' + data.id + '_"]').find('.cf-field-wrapper__body').addClass('dtc-group-color')
+    $('[id^="cf_field_' + data.id + '_"]').find('.cf-field-view__value').text('Заголовок')
 
     var formatedData = {
         "id": data.id,
@@ -73,7 +73,7 @@ async function makeFiledAsGroup(data,level="TITLE_CUSTOM") {
 };
 
 async function getCustomFields(amocrm) {
-    const response = await $.get("/api/v4/"+amocrm.data.current_entity+"/custom_fields")
+    const response = await $.get("/api/v4/" + amocrm.data.current_entity + "/custom_fields")
 
     let customFields = response._embedded.custom_fields;
 
@@ -81,7 +81,7 @@ async function getCustomFields(amocrm) {
 }
 
 async function getAllCustomFields(amocrm) {
-    const response = await $.get("/api/v4/"+amocrm.data.current_entity+"/custom_fields")
+    const response = await $.get("/api/v4/" + amocrm.data.current_entity + "/custom_fields")
 
     return response._embedded.custom_fields;
 }
@@ -93,35 +93,35 @@ const Widget = {
         const ids = cfs.map(item => item.id);
 
 
-        window.toggleSelect = function (event){
-            let i=$(event.target)
-            if($(i).hasClass('dct_custom_field_group')){
-                i=$(event.target);
-            }else{
-                i=$(event.target).closest('.dct_custom_field_group')
+        window.toggleSelect = function (event) {
+            let i = $(event.target)
+            if ($(i).hasClass('dct_custom_field_group')) {
+                i = $(event.target);
+            } else {
+                i = $(event.target).closest('.dct_custom_field_group')
             }
             $(i).toggleClass('dct_angle_bottom')
             $(i).toggleClass('dct_angle_top')
-            let el=$(i);
-            let item=$(el).next()
-            let out=0;
-            console.log(el,item)
-            while((!$(item).hasClass('dct_custom_field_group') && !$(item).hasClass('linked-form__field '))&&out<30){
+            let el = $(i);
+            let item = $(el).next()
+            let out = 0;
+            console.log(el, item)
+            while ((!$(item).hasClass('dct_custom_field_group') && !$(item).hasClass('linked-form__field ')) && out < 30) {
                 // console.log(item.hasClass('dct_custom_field_group'),!item.next().hasClass('linked-form__field '))
-                if ($(item).closest('.linked-form__multiple-container').length>0){
+                if ($(item).closest('.linked-form__multiple-container').length > 0) {
                     $(item).closest('.linked-form__multiple-container').toggleClass('dtc-elem-hidden');
-                }else{
+                } else {
                     $(item).toggleClass('dtc-elem-hidden');
                 }
-                item=$(item).next();
+                item = $(item).next();
                 out++;
             }
         }
 
 
         ids.forEach(id => {
-            $('.linked-form__field[data-id="'+id+'"]').addClass('dct_custom_field_group').addClass('dct_angle_bottom').attr('onclick','toggleSelect(event)')
-            $('.linked-form__field[data-id="'+id+'"]').find('.linked-form__field__value').remove();
+            $('.linked-form__field[data-id="' + id + '"]').addClass('dct_custom_field_group').addClass('dct_angle_bottom').attr('onclick', 'toggleSelect(event)')
+            $('.linked-form__field[data-id="' + id + '"]').find('.linked-form__field__value').remove();
         });
 
         var check = false;
@@ -132,9 +132,9 @@ const Widget = {
             }
             if (check) {
                 if (!$elem.hasClass('dct_custom_field_group')) {
-                    if ($elem.closest('.linked-form__multiple-container').length>0){
+                    if ($elem.closest('.linked-form__multiple-container').length > 0) {
                         $elem.closest('.linked-form__multiple-container').toggleClass('dtc-elem-hidden');
-                    }else{
+                    } else {
                         $elem.addClass('dtc-elem-hidden');
                     }
                 }
@@ -147,19 +147,19 @@ const Widget = {
         return true
     },
     bind_actions: async (amocrm, self) => {
-        window.colorChange=function(event){
-            const disabled=setInterval(()=>{
-                if($('.cf-field-wrapper__body').length>0) {
+        window.colorChange = function (event) {
+            const disabled = setInterval(() => {
+                if ($('.cf-field-wrapper__body').length > 0) {
                     $('.cf-field-edit__body-top').addClass('dct-group-disabled')
                     $('.cf-field-edit__type-select').addClass('dct-group-disabled')
                     $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
                     $('.modal-body__actions__save').addClass('dct-group-button')
                     clearInterval(disabled)
                 }
-            },50);
+            }, 50);
         };
 
-        $('#linked_context_settings,.js-card-tab[data-id="settings"]').on('click',async function (e) {
+        $('#linked_context_settings,.js-card-tab[data-id="settings"]').on('click', async function (e) {
 
             const cfs = await getCustomFields(amocrm);
             const ids = cfs.map(item => item.id);
@@ -167,12 +167,12 @@ const Widget = {
             const interval = setInterval(() => {
                 if ($('.cf-field-add').length > 0) {
                     $('.cf-field-wrapper').each(function (index, elem) {
-                        if($(elem).attr('id')){
+                        if ($(elem).attr('id')) {
                             let number = parseInt($(elem).attr('id').match(/\d+/)[0].trim());
-                            if (!ids.includes(number)){
+                            if (!ids.includes(number)) {
                                 $(elem).addClass('dtc-default-element')
-                            }else{
-                                $(elem).addClass('dtc-color-main').attr('onclick','colorChange(event)')
+                            } else {
+                                $(elem).addClass('dtc-color-main').attr('onclick', 'colorChange(event)')
                                 $(elem).find('.cf-field-wrapper__body').addClass('dtc-group-color');
                                 $(elem).find('.cf-field-view__value').text('Заголовок')
                             }
@@ -182,11 +182,11 @@ const Widget = {
                     var addFieldButton = document.querySelector('.cf-field-add');
                     addFieldButton.addEventListener('click', function () {
 
-                        const disabled=setInterval(()=> {
+                        const disabled = setInterval(() => {
                             if ($('.cf-field-edit__type-select').length > 0) {
                                 var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
                                 modalWindow.querySelector('.button-input').addEventListener('click', function () {
-                                    if(!modalWindow.querySelector('.button-input').classList.contains('dct-group-button')) {
+                                    if (!modalWindow.querySelector('.button-input').classList.contains('dct-group-button')) {
                                         setTimeout(async function (settings) {
                                             const cfs = await getAllCustomFields(amocrm);
                                             var keys = Object.keys(cfs);
@@ -198,7 +198,7 @@ const Widget = {
                                 });
                                 clearInterval(disabled)
                             }
-                        },100);
+                        }, 100);
                     });
                     var titleButton = addFieldButton.cloneNode(true);
                     console.log(titleButton)
@@ -209,9 +209,9 @@ const Widget = {
                     addFieldButton.parentNode.appendChild(titleButton);
                     titleButton.addEventListener('click', function () {
                         addFieldButton.click();
-                        const disabled=setInterval(()=>{
+                        const disabled = setInterval(() => {
                             console.log(1)
-                            if($('.cf-field-edit__type-select').length>0){
+                            if ($('.cf-field-edit__type-select').length > 0) {
                                 $('.cf-field-edit__body-top').addClass('dct-group-disabled')
                                 $('.cf-field-edit__type-select').addClass('dct-group-disabled')
                                 $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
@@ -228,7 +228,7 @@ const Widget = {
                                 });
                                 clearInterval(disabled)
                             }
-                        },100)
+                        }, 100)
                     });
                     clearInterval(interval)
                 }
@@ -249,7 +249,8 @@ const Widget = {
         }
     },
     settings: async function (amocrm, appElement, self) {
-        appElement[0].classList.add('dtc-settings-app'); // Add the class to the element
+        document.querySelector('.widget_settings_block__descr').style.display = 'none'; // hide this element
+        $(appElement[0]).append('<div id="vue-app-dispatch"></div>'); // add new div here and set id vue-app-dispatch
         try {
             const subdomainId = await async(amocrm);
             // Check if subdomain exists
@@ -263,13 +264,13 @@ const Widget = {
                     app.use(Notifications)
                     app.directive("maska", vMaska)
                     app.use(store);
-                    app.mount('.dtc-settings-app');
+                    app.mount('#vue-app-dispatch');
                 }
             }
         } catch (error) {
             const errorHandler = createApp(ErrorHendler);
             errorHandler.provide('error', error);
-            errorHandler.mount('.dtc-settings-app');
+            errorHandler.mount('#vue-app-dispatch');
         }
     },
     advancedSettings: async function (amocrm, appElement, self) {
