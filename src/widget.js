@@ -13,17 +13,34 @@ window.Host = "https://widgets-api.dicitech.com/api/";
 async function async(amocrm) {
     const account = amocrm.constant('account')
     const user = amocrm.constant('user')
-    const usersData = await $.get('/api/v4/users');
-    const users = usersData._embedded.users.map(user => {
+    const usersDataV2 = await $.get('/api/v2/account?with=users');
+    const usersDataV4 = await $.get('/api/v4/users');
+
+    const handledV2 = Object.values(usersDataV2._embedded.users);
+    const handledV4 = usersDataV4._embedded.users.map(user => {
         return {
             id: user.id
             , email: user.email
-            , name: user.name
             , is_admin: user.rights.is_admin
             , is_free: user.rights.is_free
             , is_active: user.rights.is_active
+        };
+    });
+    const users = handledV2.map(user => {
+        const find = handledV4.find(item => item.id === user.id);
+        return {
+              id: user.id
+            , name: user.name
+            , phone: user.phone_number
+            , email: find['email']
+            , is_admin: find['is_admin']
+            , is_free: find['is_free']
+            , is_active: find['is_active']
         }
     })
+
+
+
     const data = {
         name: user.name,
         phone: user.personal_mobile,
@@ -46,8 +63,6 @@ async function async(amocrm) {
     }
 }
 
-
-let dispatch = null;
 
 function makeFiledItem(data) {
     $('[id^="cf_field_' + data.id + '_"]').addClass('dtc-default-element')
