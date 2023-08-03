@@ -92,7 +92,8 @@ async function getCustomFields(amocrm) {
 
     let customFields = response._embedded.custom_fields;
 
-    return customFields.filter((field) => field.triggers.length > 0);
+    return customFields.filter((field) => field.triggers.includes('TITLE_CUSTOM')
+);
 }
 
 async function getAllCustomFields(amocrm) {
@@ -140,7 +141,7 @@ const Widget = {
         });
 
         var check = false;
-        $('.card-entity-form__fields').first().find('.linked-form__field').each(function (index, elem) {
+        $('.card-entity-form__fields .linked-forms__group-wrapper').first().find('.linked-form__field').each(function (index, elem) {
             var $elem = $(elem);
             if ($elem.hasClass('dct_custom_field_group')) {
                 check = true;
