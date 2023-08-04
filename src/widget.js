@@ -68,7 +68,6 @@ function makeFiledItem(data) {
     $('[id^="cf_field_' + data.id + '_"]').addClass('dtc-default-element')
 }
 async function makeFiledAsGroup(data, level = "TITLE_CUSTOM") {
-    console.log(data.id, data.name)
     $('[id^="cf_field_' + data.id + '_"]').addClass('dtc-color-main')
     $('[id^="cf_field_' + data.id + '_"]').find('.cf-field-wrapper__body').addClass('dtc-group-color')
     $('[id^="cf_field_' + data.id + '_"]').find('.cf-field-view__value').text('Заголовок')
@@ -88,18 +87,26 @@ async function makeFiledAsGroup(data, level = "TITLE_CUSTOM") {
 };
 
 async function getCustomFields(amocrm) {
-    const response = await $.get("/api/v4/" + amocrm.data.current_entity + "/custom_fields")
 
-    let customFields = response._embedded.custom_fields;
-
-    return customFields.filter((field) => field.triggers.includes('TITLE_CUSTOM')
+    let entities=['leads','contacts','companies'];
+    let array=[];
+    for (const item of entities) {
+        const response = await $.get("/api/v4/" + item + "/custom_fields")
+        array = array.concat(response._embedded.custom_fields); // Use 'array = array.concat(...)' to merge the arrays
+    }
+    console.log(array)
+    return array.filter((field) => field.triggers.includes('TITLE_CUSTOM')
 );
 }
 
 async function getAllCustomFields(amocrm) {
-    const response = await $.get("/api/v4/" + amocrm.data.current_entity + "/custom_fields")
-
-    return response._embedded.custom_fields;
+    let entities=['leads','contacts','companies'];
+    let array=[];
+    for (const item of entities) {
+        const response = await $.get("/api/v4/" + item + "/custom_fields")
+        array = array.concat(response._embedded.custom_fields); // Use 'array = array.concat(...)' to merge the arrays
+    }
+    return array;
 }
 
 const Widget = {
@@ -121,9 +128,7 @@ const Widget = {
             let el = $(i);
             let item = $(el).next()
             let out = 0;
-            console.log(el, item)
             while ((!$(item).hasClass('dct_custom_field_group') && !$(item).hasClass('linked-form__field ')) && out < 30) {
-                // console.log(item.hasClass('dct_custom_field_group'),!item.next().hasClass('linked-form__field '))
                 if ($(item).closest('.linked-form__multiple-container').length > 0) {
                     $(item).closest('.linked-form__multiple-container').toggleClass('dtc-elem-hidden');
                 } else {
@@ -135,55 +140,48 @@ const Widget = {
         }
 
 
+        console.log(ids);
         ids.forEach(id => {
             $('.linked-form__field[data-id="' + id + '"]').addClass('dct_custom_field_group').addClass('dct_angle_bottom').attr('onclick', 'toggleSelect(event)')
             $('.linked-form__field[data-id="' + id + '"]').find('.linked-form__field__value').remove();
         });
 
-        var check = false;
-        $('.card-entity-form__fields .linked-forms__group-wrapper').first().find('.linked-form__field').each(function (index, elem) {
-            var $elem = $(elem);
-            if ($elem.hasClass('dct_custom_field_group')) {
-                check = true;
-            }
-            if (check) {
-                if (!$elem.hasClass('dct_custom_field_group')) {
-                    if ($elem.closest('.linked-form__multiple-container').length > 0) {
-                        $elem.closest('.linked-form__multiple-container').toggleClass('dtc-elem-hidden');
-                    } else {
-                        $elem.addClass('dtc-elem-hidden');
-                    }
-                }
-            }
+        $('.card-holder__container form').each(function () {
+            var $groupWrapper = $(this).find('.linked-forms__group-wrapper').first();
+            hideElems($groupWrapper)
         });
 
-        return true;
-    },
-    init: async (amocrm, self) => {
-        return true
-    },
-    bind_actions: async (amocrm, self) => {
-        window.colorChange = function (event) {
-            const disabled = setInterval(() => {
-                if ($('.cf-field-wrapper__body').length > 0) {
-                    $('.cf-field-edit__body-top').addClass('dct-group-disabled')
-                    $('.cf-field-edit__type-select').addClass('dct-group-disabled')
-                    $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
-                    $('.modal-body__actions__save').addClass('dct-group-button')
-                    clearInterval(disabled)
+        $('.card-holder__container form').each(function () {
+            var $groupWrapper = $(this).find('.linked-form__fields').first();
+            hideElems($groupWrapper)
+        });
+
+        function hideElems($groupWrapper){
+            var check = false;
+            $groupWrapper.find('.linked-form__field').each(function (index, elem) {
+                var $elem = $(elem);
+                if ($elem.hasClass('dct_custom_field_group')) {
+                    check = true;
                 }
-            }, 50);
-        };
+                console.log($elem)
+                if (check) {
+                    if (!$elem.hasClass('dct_custom_field_group')) {
+                        if ($elem.closest('.linked-form__multiple-container').length > 0) {
+                            $elem.closest('.linked-form__multiple-container').toggleClass('dtc-elem-hidden');
+                        } else {
+                            $elem.addClass('dtc-elem-hidden');
+                        }
+                    }
+                }
+            });
+        }
 
-        $('#linked_context_settings,.js-card-tab[data-id="settings"]').on('click', async function (e) {
 
-            const cfs = await getCustomFields(amocrm);
-            const ids = cfs.map(item => item.id);
-
-            const interval = setInterval(() => {
-                if ($('.cf-field-add').length > 0) {
-                    $('.cf-field-wrapper').each(function (index, elem) {
-                        if ($(elem).attr('id')) {
+        const interval = setInterval(() => {
+            if ($('.cf-field-add').length > 0) {
+                $('.cf-field-wrapper').each(function (index, elem) {
+                    if ($(elem).attr('id')) {
+                        if($(elem).attr('id').match(/\d+/)){
                             let number = parseInt($(elem).attr('id').match(/\d+/)[0].trim());
                             if (!ids.includes(number)) {
                                 $(elem).addClass('dtc-default-element')
@@ -193,31 +191,34 @@ const Widget = {
                                 $(elem).find('.cf-field-view__value').text('Заголовок')
                             }
                         }
-                    });
+                    }
+                });
 
-                    var addFieldButton = document.querySelector('.cf-field-add');
-                    addFieldButton.addEventListener('click', function () {
-
-                        const disabled = setInterval(() => {
-                            if ($('.cf-field-edit__type-select').length > 0) {
-                                var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
-                                modalWindow.querySelector('.button-input').addEventListener('click', function () {
-                                    if (!modalWindow.querySelector('.button-input').classList.contains('dct-group-button')) {
-                                        setTimeout(async function (settings) {
-                                            const cfs = await getAllCustomFields(amocrm);
-                                            var keys = Object.keys(cfs);
-                                            var lastKey = keys[keys.length - 1];
-                                            var lastElement = cfs[lastKey];
-                                            makeFiledItem(lastElement);
-                                        }, 1500);
-                                    }
-                                });
-                                clearInterval(disabled)
-                            }
-                        }, 100);
-                    });
+                var addFieldButton = document.querySelector('.cf-field-add');
+                addFieldButton.addEventListener('click', function () {
+                    const disabled = setInterval(() => {
+                        console.log(123)
+                        if ($('.cf-field-edit__type-select').length > 0) {
+                            console.log(321)
+                            var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
+                            modalWindow.querySelector('.button-input').addEventListener('click', function () {
+                                if (!modalWindow.querySelector('.button-input').classList.contains('dct-group-button')) {
+                                    setTimeout(async function (settings) {
+                                        const cfs = await getAllCustomFields(amocrm);
+                                        var keys = Object.keys(cfs);
+                                        var lastKey = keys[keys.length - 1];
+                                        var lastElement = cfs[lastKey];
+                                        makeFiledItem(lastElement);
+                                    }, 1500);
+                                }
+                            });
+                            clearInterval(disabled)
+                        }
+                    }, 100);
+                });
+                if(!document.querySelector('.title_button_custom')){
+                    console.log('elem')
                     var titleButton = addFieldButton.cloneNode(true);
-                    console.log(titleButton)
                     titleButton.style.marginLeft = '2px';
                     titleButton.classList.add('title_button_custom');
                     titleButton.classList.remove('js-card-cf-add-field');
@@ -226,13 +227,21 @@ const Widget = {
                     titleButton.addEventListener('click', function () {
                         addFieldButton.click();
                         const disabled = setInterval(() => {
-                            console.log(1)
-                            if ($('.cf-field-edit__type-select').length > 0) {
-                                $('.cf-field-edit__body-top').addClass('dct-group-disabled')
-                                $('.cf-field-edit__type-select').addClass('dct-group-disabled')
-                                $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
-                                $('.modal-body__actions__save').addClass('dct-group-button')
-                                var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
+                            console.log('second')
+                            if (document.querySelector('.cf-field-wrapper__body')) {
+                                if($('.cf-field-edit__body-top')){
+                                    $('.cf-field-edit__body-top').addClass('dct-group-disabled')
+                                }
+                                if($('.cf-field-edit__type-select')){
+                                    $('.cf-field-edit__type-select').addClass('dct-group-disabled')
+                                }
+                                if($('.cf-field-wrapper__body_no-id')){
+                                    $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
+                                }
+                                if($('.modal-body__actions__save')){
+                                    $('.modal-body__actions__save').addClass('dct-group-button')
+                                }
+                                  var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
                                 modalWindow.querySelector('.button-input').addEventListener('click', function () {
                                     setTimeout(async function (settings) {
                                         const cfs = await getAllCustomFields(amocrm);
@@ -246,12 +255,43 @@ const Widget = {
                             }
                         }, 100)
                     });
-                    clearInterval(interval)
                 }
-            }, 200);
+            }
+
+        }, 500);
 
 
-        });
+
+        return true;
+    },
+    init: async (amocrm, self) => {
+        return true
+    },
+    bind_actions: async (amocrm, self) => {
+        window.colorChange = function (event) {
+            const disabled = setInterval(() => {
+                if (document.querySelector('.cf-field-wrapper__body')) {
+                    if($('.cf-field-edit__body-top')){
+                        $('.cf-field-edit__body-top').addClass('dct-group-disabled')
+                    }
+                    if($('.cf-field-edit__type-select')){
+                        $('.cf-field-edit__type-select').addClass('dct-group-disabled')
+                    }
+                    if($('.cf-field-wrapper__body_no-id')){
+                        $('.cf-field-wrapper__body_no-id').addClass('dct-group-modal')
+                    }
+                    if($('.modal-body__actions__save')){
+                        $('.modal-body__actions__save').addClass('dct-group-button')
+                    }
+                    clearInterval(disabled)
+                }
+            }, 50);
+        };
+
+        // $('#linked_context_settings,.js-card-tab[data-id="settings"]').on('click', async function (e) {
+
+
+        // });
 
         return true
     },
