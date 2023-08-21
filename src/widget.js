@@ -7,6 +7,7 @@ import ErrorHendler from './ErrorHendler.vue'
 import { vMaska } from "maska"
 import Notifications from '@kyvg/vue3-notification'
 import apiClient from "../apiClient"
+import axios from "axios";
 
 window.Host = "https://widgets-api.dicitech.com/api/";
 
@@ -77,13 +78,17 @@ async function makeFiledAsGroup(data, level = "TITLE_CUSTOM") {
         "name": data.name,
         "triggers": [level]
     };
-    fetch("/api/v4/".concat(AMOCRM.data.current_entity, "/custom_fields/").concat(formatedData.id), {
-        method: "PATCH",
-        body: JSON.stringify(formatedData),
+    axios.patch(`/api/v4/${AMOCRM.data.current_entity}/custom_fields/${formatedData.id}`, JSON.stringify(formatedData), {
         headers: {
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json'
         }
-    })
+    }) .then(response => {
+            // Handle the response here
+            console.log('Request successful:', response.data);
+        }).catch(error => {
+            // Handle errors here
+            console.error('Request failed:', error);
+        });
 };
 
 async function getCustomFields(amocrm) {
@@ -94,7 +99,6 @@ async function getCustomFields(amocrm) {
         const response = await $.get("/api/v4/" + item + "/custom_fields")
         array = array.concat(response._embedded.custom_fields); // Use 'array = array.concat(...)' to merge the arrays
     }
-    console.log(array)
     return array.filter((field) => field.triggers.includes('TITLE_CUSTOM')
 );
 }
@@ -108,6 +112,12 @@ async function getAllCustomFields(amocrm) {
     }
     return array;
 }
+
+async function getAllCustomFieldsCurrentEntitiy(amocrm) {
+    const response = await $.get("/api/v4/" + AMOCRM.data.current_entity + "/custom_fields")
+    return response._embedded.custom_fields;
+}
+
 
 const Widget = {
 
@@ -140,7 +150,6 @@ const Widget = {
         }
 
 
-        console.log(ids);
         ids.forEach(id => {
             $('.linked-form__field[data-id="' + id + '"]').addClass('dct_custom_field_group').addClass('dct_angle_bottom').attr('onclick', 'toggleSelect(event)')
             $('.linked-form__field[data-id="' + id + '"]').find('.linked-form__field__value').remove();
@@ -163,7 +172,6 @@ const Widget = {
                 if ($elem.hasClass('dct_custom_field_group')) {
                     check = true;
                 }
-                console.log($elem)
                 if (check) {
                     if (!$elem.hasClass('dct_custom_field_group')) {
                         if ($elem.closest('.linked-form__multiple-container').length > 0) {
@@ -197,14 +205,12 @@ const Widget = {
                 var addFieldButton = document.querySelector('.cf-field-add');
                 addFieldButton.addEventListener('click', function () {
                     const disabled = setInterval(() => {
-                        console.log(123)
                         if ($('.cf-field-edit__type-select').length > 0) {
-                            console.log(321)
                             var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
                             modalWindow.querySelector('.button-input').addEventListener('click', function () {
                                 if (!modalWindow.querySelector('.button-input').classList.contains('dct-group-button')) {
                                     setTimeout(async function (settings) {
-                                        const cfs = await getAllCustomFields(amocrm);
+                                        const cfs = await getAllCustomFieldsCurrentEntitiy(amocrm);
                                         var keys = Object.keys(cfs);
                                         var lastKey = keys[keys.length - 1];
                                         var lastElement = cfs[lastKey];
@@ -217,7 +223,6 @@ const Widget = {
                     }, 100);
                 });
                 if(!document.querySelector('.title_button_custom')){
-                    console.log('elem')
                     var titleButton = addFieldButton.cloneNode(true);
                     titleButton.style.marginLeft = '2px';
                     titleButton.classList.add('title_button_custom');
@@ -227,7 +232,6 @@ const Widget = {
                     titleButton.addEventListener('click', function () {
                         addFieldButton.click();
                         const disabled = setInterval(() => {
-                            console.log('second')
                             if (document.querySelector('.cf-field-wrapper__body')) {
                                 if($('.cf-field-edit__body-top')){
                                     $('.cf-field-edit__body-top').addClass('dct-group-disabled')
@@ -244,7 +248,7 @@ const Widget = {
                                   var modalWindow = document.querySelector('.cf-field-wrapper__body_no-id');
                                 modalWindow.querySelector('.button-input').addEventListener('click', function () {
                                     setTimeout(async function (settings) {
-                                        const cfs = await getAllCustomFields(amocrm);
+                                        const cfs = await getAllCustomFieldsCurrentEntitiy(amocrm);
                                         var keys = Object.keys(cfs);
                                         var lastKey = keys[keys.length - 1];
                                         var lastElement = cfs[lastKey];
